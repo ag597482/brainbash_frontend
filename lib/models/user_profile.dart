@@ -84,7 +84,7 @@ class UserProfile {
       id: json['id'] as String,
       name: json['name'] as String,
       email: json['email'] as String?,
-      avatarUrl: json['avatarUrl'] as String?,
+      avatarUrl: json['avatarUrl'] as String? ?? json['picture'] as String?,
       overallScore: (json['overallScore'] as num?)?.toDouble(),
       streak: json['streak'] as int? ?? 0,
       categoryStats: statsMap,

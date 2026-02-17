@@ -8,6 +8,7 @@ import '../../../providers/stats_provider.dart';
 import '../widgets/stats_summary.dart';
 import '../widgets/category_card.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../providers/auth_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -44,6 +45,13 @@ class HomeScreen extends ConsumerWidget {
                   icon: const Icon(Icons.bar_chart_rounded),
                   onPressed: () => context.push('/dashboard'),
                   tooltip: 'Dashboard',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.logout_rounded),
+                  onPressed: () {
+                    ref.read(authProvider.notifier).logout();
+                  },
+                  tooltip: 'Logout',
                 ),
               ],
             ),
