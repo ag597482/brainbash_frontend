@@ -16,6 +16,9 @@ GoRouter createAppRouter(Ref ref) {
   return GoRouter(
     initialLocation: '/',
     redirect: (context, state) {
+      // Wait for initial auth load (e.g. reading token/user from device)
+      if (authState.isLoading) return null;
+
       final isLoggedIn = authState.isAuthenticated;
       final isOnLogin = state.matchedLocation == '/login';
 

@@ -80,11 +80,17 @@ class UserProfile {
       }
     }
 
+    // Support both API response (user_id, picture) and stored format (id, avatarUrl)
+    final id = json['user_id'] as String? ?? json['id'] as String?;
+    final name = json['name'] as String? ?? '';
+    final email = json['email'] as String?;
+    final avatarUrl = json['picture'] as String? ?? json['avatarUrl'] as String?;
+
     return UserProfile(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String?,
-      avatarUrl: json['avatarUrl'] as String? ?? json['picture'] as String?,
+      id: id ?? '',
+      name: name.isNotEmpty ? name : (email ?? 'User'),
+      email: email,
+      avatarUrl: avatarUrl,
       overallScore: (json['overallScore'] as num?)?.toDouble(),
       streak: json['streak'] as int? ?? 0,
       categoryStats: statsMap,

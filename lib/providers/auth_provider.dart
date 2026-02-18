@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -5,6 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_profile.dart';
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
+
+const _keyAuthToken = 'auth_token';
+const _keyAuthUser = 'auth_user';
 
 const _googleClientId =
     '299124149695-l9j2u20pfjekin89rg24olrob8kia2cr.apps.googleusercontent.com';
@@ -61,7 +66,7 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._authService, this._apiClient, this._googleSignIn)
-      : super(const AuthState()) {
+      : super(const AuthState(isLoading: true)) {
     _loadSavedToken();
   }
 
@@ -71,16 +76,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> _loadSavedToken() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-    if (token != null) {
-      _apiClient.setAuthToken(token);
+    final token = prefs.getString(_keyAuthToken);
+
+    if (token == null) {
+      state = const AuthState(isLoading: false);
+      return;
+    }
+
+    _apiClient.setAuthToken(token);
+
+    // Prefer saved user so we can show home without calling /auth/me
+    final userJson = prefs.getString(_keyAuthUser);
+    if (userJson != null) {
       try {
-        final user = await _authService.getProfile();
-        state = AuthState(user: user, token: token);
+        final userMap = jsonDecode(userJson) as Map<String, dynamic>;
+        final user = UserProfile.fromJson(userMap);
+        state = AuthState(user: user, token: token, isLoading: false);
+        return;
       } catch (_) {
-        await prefs.remove('auth_token');
-        _apiClient.clearAuthToken();
+        // Fall through to getProfile or clear
       }
+    }
+
+    try {
+      final user = await _authService.getProfile();
+      state = AuthState(user: user, token: token, isLoading: false);
+      await prefs.setString(_keyAuthUser, jsonEncode(user.toJson()));
+    } catch (_) {
+      await prefs.remove(_keyAuthToken);
+      await prefs.remove(_keyAuthUser);
+      _apiClient.clearAuthToken();
+      state = const AuthState(isLoading: false);
     }
   }
 
@@ -107,7 +133,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', result.token);
+      await prefs.setString(_keyAuthToken, result.token);
+      await prefs.setString(_keyAuthUser, jsonEncode(result.user.toJson()));
 
       state = AuthState(user: result.user, token: result.token);
     } catch (e) {
@@ -119,7 +146,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _authService.logout();
     await _googleSignIn.signOut();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
+    await prefs.remove(_keyAuthToken);
+    await prefs.remove(_keyAuthUser);
     state = const AuthState();
   }
 }
