@@ -91,4 +91,35 @@ enum QuizCategory {
       orElse: () => processingSpeed,
     );
   }
+
+  /// Backend API gametype string (snake_case). Returns null for consistencyScore.
+  String? get backendGameType {
+    switch (this) {
+      case QuizCategory.processingSpeed:
+        return 'processing_speed';
+      case QuizCategory.workingMemory:
+        return 'working_memory';
+      case QuizCategory.logicalReasoning:
+        return 'logical_reasoning';
+      case QuizCategory.mathReasoning:
+        return 'math_reasoning';
+      case QuizCategory.reactionTime:
+        return 'reflex_time';
+      case QuizCategory.attentionControl:
+        return 'attention_control';
+      case QuizCategory.consistencyScore:
+        return null;
+    }
+  }
+
+  /// Whether this category is submitted to /api/game/result (reflex_time has different payload).
+  bool get isReflexTimeGame => this == QuizCategory.reactionTime;
+
+  /// Parse QuizCategory from backend API key (e.g. reflex_time, logical_reasoning).
+  static QuizCategory? fromBackendGameType(String backendKey) {
+    for (final c in values) {
+      if (c.backendGameType == backendKey) return c;
+    }
+    return null;
+  }
 }

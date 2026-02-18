@@ -116,12 +116,22 @@ class QuizSessionNotifier extends StateNotifier<QuizSession?> {
     }
   }
 
-  /// Submit result to the backend.
+  /// Submit result to POST /api/game/result and merge response (score, questions, correct, accuracy, avgTime) into result.
   Future<QuizResult?> submitResult() async {
     final result = buildResult();
     if (result == null) return null;
     try {
-      return await _quizService.submitResult(result);
+      final apiResponse = await _quizService.submitGameResult(result);
+      if (apiResponse != null) {
+        final merged = result.copyWith(
+          normalizedScore: apiResponse.score,
+          totalQuestions: apiResponse.questions,
+          correctAnswers: apiResponse.correct,
+          avgResponseTimeMs: apiResponse.avgTime * 1000,
+        );
+        return merged;
+      }
+      return result;
     } catch (_) {
       return result;
     }

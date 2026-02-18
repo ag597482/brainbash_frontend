@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../models/quiz_category.dart';
 import '../../../models/quiz_session.dart';
 import '../../../providers/quiz_provider.dart';
+import '../../../providers/stats_provider.dart';
 import '../../../providers/timer_provider.dart';
 import '../widgets/countdown_timer.dart';
 import '../widgets/progress_bar.dart';
@@ -79,15 +80,17 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     }
   }
 
-  void _onComplete() {
-    final result = ref.read(quizSessionProvider.notifier).buildResult();
+  Future<void> _onComplete() async {
+    final notifier = ref.read(quizSessionProvider.notifier);
+    final result = notifier.buildResult();
     if (result != null) {
-      ref.read(latestResultProvider.notifier).state = result;
-      ref.read(quizSessionProvider.notifier).submitResult();
+      final merged = await notifier.submitResult();
+      ref.read(latestResultProvider.notifier).state = merged ?? result;
+      ref.invalidate(apiUserStatsProvider);
     }
     ref.read(countdownTimerProvider.notifier).reset();
     ref.read(elapsedTimerProvider.notifier).stop();
-    context.go('/quiz/${widget.category.slug}/result');
+    if (mounted) context.go('/quiz/${widget.category.slug}/result');
   }
 
   @override

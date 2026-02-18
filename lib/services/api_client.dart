@@ -4,7 +4,7 @@ class ApiClient {
   ApiClient({String? baseUrl, String? authToken})
       : _dio = Dio(
           BaseOptions(
-            baseUrl: baseUrl ?? 'http://localhost:8080',
+            baseUrl: baseUrl ?? 'https://brainbashbackend-brainbash.up.railway.app',
             connectTimeout: const Duration(seconds: 10),
             receiveTimeout: const Duration(seconds: 10),
             headers: {

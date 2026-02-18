@@ -1,4 +1,5 @@
 import 'api_client.dart';
+import '../models/game_result_response.dart';
 import '../models/question.dart';
 import '../models/quiz_category.dart';
 import '../models/quiz_result.dart';
@@ -19,12 +20,34 @@ class QuizService {
     return questions;
   }
 
-  Future<QuizResult> submitResult(QuizResult result) async {
+  /// Submits game result to POST /api/game/result. Returns backend score/accuracy/etc.
+  Future<GameResultResponse?> submitGameResult(QuizResult result) async {
+    final gametype = result.category.backendGameType;
+    if (gametype == null) return null;
+
+    final questionResponses = result.category.isReflexTimeGame
+        ? result.answers
+            .map((a) => <String, dynamic>{
+                  'time_taken': a.responseTimeMs / 1000.0,
+                })
+            .toList()
+        : result.answers
+            .map((a) => <String, dynamic>{
+                  'time_taken': a.responseTimeMs / 1000.0,
+                  'outcome': a.isCorrect ? 'correct' : 'incorrect',
+                })
+            .toList();
+
     final response = await apiClient.post<Map<String, dynamic>>(
-      '/quiz/results',
-      data: result.toJson(),
+      '/api/game/result',
+      data: {
+        'gametype': gametype,
+        'question_responses': questionResponses,
+      },
     );
-    return QuizResult.fromJson(response.data!);
+    final data = response.data;
+    if (data == null) return null;
+    return GameResultResponse.fromJson(Map<String, dynamic>.from(data as Map));
   }
 
   Future<List<QuizResult>> getHistory(QuizCategory category) async {

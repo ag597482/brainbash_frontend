@@ -8,28 +8,46 @@ import '../../../core/theme/app_colors.dart';
 import '../widgets/radar_chart.dart';
 import '../widgets/consistency_graph.dart';
 
+/// Toggle for dashboard: show Avg score or Max score from /api/user/stats.
+final dashboardScoreModeProvider =
+    StateProvider<bool>((ref) => false); // false = Avg, true = Max
+
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(userStatsProvider);
+    final apiStatsAsync = ref.watch(apiUserStatsProvider);
+    final userStatsAsync = ref.watch(userStatsProvider);
     final consistencyScore = ref.watch(consistencyScoreProvider);
     final overallScore = ref.watch(overallScoreProvider);
+    final useMaxScore = ref.watch(dashboardScoreModeProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Brain Dashboard'),
       ),
       body: SafeArea(
-        child: statsAsync.when(
+        child: apiStatsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Error: $e')),
-          data: (profile) {
+          data: (apiStats) {
             final scores = <QuizCategory, double>{};
-            for (final cat in QuizCategory.playable) {
-              scores[cat] = profile?.categoryStats[cat]?.lastScore ?? 0;
+            if (apiStats != null) {
+              for (final cat in QuizCategory.playable) {
+                final stats = apiStats.categoryScores[cat];
+                scores[cat] = useMaxScore
+                    ? (stats?.maxScore ?? 0)
+                    : (stats?.avgScore ?? 0);
+              }
+            } else {
+              final profile = userStatsAsync.valueOrNull;
+              for (final cat in QuizCategory.playable) {
+                scores[cat] = profile?.categoryStats[cat]?.lastScore ?? 0;
+              }
             }
+
+            final profile = userStatsAsync.valueOrNull;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -95,12 +113,41 @@ class DashboardScreen extends ConsumerWidget {
 
                   const SizedBox(height: 24),
 
-                  // Radar chart
-                  Text(
-                    'Cognitive Profile',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
+                  // Avg / Max toggle
+                  Row(
+                    children: [
+                      Text(
+                        'Cognitive Profile',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardTheme.color,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.border),
                         ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _ToggleChip(
+                              label: 'Avg',
+                              selected: !useMaxScore,
+                              onTap: () =>
+                                  ref.read(dashboardScoreModeProvider.notifier).state = false,
+                            ),
+                            _ToggleChip(
+                              label: 'Max',
+                              selected: useMaxScore,
+                              onTap: () =>
+                                  ref.read(dashboardScoreModeProvider.notifier).state = true,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Container(
@@ -116,7 +163,7 @@ class DashboardScreen extends ConsumerWidget {
 
                   const SizedBox(height: 24),
 
-                  // Category breakdown
+                  // Category breakdown (uses same Avg/Max as toggle)
                   Text(
                     'Category Scores',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -127,16 +174,22 @@ class DashboardScreen extends ConsumerWidget {
                   ...QuizCategory.playable.asMap().entries.map((entry) {
                     final index = entry.key;
                     final cat = entry.value;
-                    final catStats = profile?.categoryStats[cat];
-                    final score = catStats?.lastScore ?? 0;
+                    final score = scores[cat] ?? 0;
+                    final catStats = apiStats?.categoryScores[cat];
+                    final avgScore = catStats?.avgScore ?? 0;
+                    final maxScore = catStats?.maxScore ?? 0;
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: _CategoryScoreRow(
                         category: cat,
                         score: score,
-                        attempts: catStats?.totalAttempts ?? 0,
-                        bestScore: catStats?.bestScore ?? 0,
+                        showMode: true,
+                        useMaxScore: useMaxScore,
+                        avgScore: avgScore,
+                        maxScore: maxScore,
+                        attempts: profile?.categoryStats[cat]?.totalAttempts ?? 0,
+                        bestScore: profile?.categoryStats[cat]?.bestScore ?? 0,
                       ),
                     )
                         .animate(delay: Duration(milliseconds: 100 * index))
@@ -220,21 +273,79 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
+class _ToggleChip extends StatelessWidget {
+  const _ToggleChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected
+          ? AppColors.primary.withValues(alpha: 0.15)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? AppColors.primary : null,
+                ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _CategoryScoreRow extends StatelessWidget {
   const _CategoryScoreRow({
     required this.category,
     required this.score,
-    required this.attempts,
-    required this.bestScore,
+    this.showMode = false,
+    this.useMaxScore = false,
+    this.avgScore = 0,
+    this.maxScore = 0,
+    this.attempts = 0,
+    this.bestScore = 0,
   });
 
   final QuizCategory category;
   final double score;
+  final bool showMode;
+  final bool useMaxScore;
+  final double avgScore;
+  final double maxScore;
   final int attempts;
   final double bestScore;
 
   @override
   Widget build(BuildContext context) {
+    String subtitle;
+    if (showMode) {
+      subtitle = useMaxScore
+          ? 'Max: ${maxScore.round()}'
+          : 'Avg: ${avgScore.round()}';
+      if (attempts > 0) {
+        subtitle += ' · $attempts attempts';
+      }
+    } else {
+      subtitle = attempts > 0
+          ? '$attempts attempts · Best: ${bestScore.round()}'
+          : 'Not attempted';
+    }
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -270,9 +381,7 @@ class _CategoryScoreRow extends StatelessWidget {
                       ),
                 ),
                 Text(
-                  attempts > 0
-                      ? '$attempts attempts · Best: ${bestScore.round()}'
-                      : 'Not attempted',
+                  subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),

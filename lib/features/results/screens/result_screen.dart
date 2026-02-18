@@ -131,7 +131,7 @@ class ResultScreen extends ConsumerWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                childAspectRatio: 1.4,
+                childAspectRatio: 1.15,
                 children: [
                   MetricTile(
                     label: 'Questions',

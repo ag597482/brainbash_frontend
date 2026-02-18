@@ -29,6 +29,32 @@ class QuizResult {
   double get accuracyPercent =>
       totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
 
+  QuizResult copyWith({
+    String? id,
+    QuizCategory? category,
+    double? normalizedScore,
+    Map<String, dynamic>? rawMetrics,
+    int? totalQuestions,
+    int? correctAnswers,
+    double? avgResponseTimeMs,
+    List<double>? responseTimes,
+    DateTime? completedAt,
+    List<AnswerRecord>? answers,
+  }) {
+    return QuizResult(
+      id: id ?? this.id,
+      category: category ?? this.category,
+      normalizedScore: normalizedScore ?? this.normalizedScore,
+      rawMetrics: rawMetrics ?? this.rawMetrics,
+      totalQuestions: totalQuestions ?? this.totalQuestions,
+      correctAnswers: correctAnswers ?? this.correctAnswers,
+      avgResponseTimeMs: avgResponseTimeMs ?? this.avgResponseTimeMs,
+      responseTimes: responseTimes ?? this.responseTimes,
+      completedAt: completedAt ?? this.completedAt,
+      answers: answers ?? this.answers,
+    );
+  }
+
   factory QuizResult.fromJson(Map<String, dynamic> json) {
     return QuizResult(
       id: json['id'] as String,

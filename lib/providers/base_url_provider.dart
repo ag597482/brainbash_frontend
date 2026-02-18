@@ -4,12 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _keyBaseUrl = 'api_base_url';
 
 /// Default URL used when none is saved.
-const defaultBaseUrl = 'http://localhost:8080';
+const defaultBaseUrl = 'https://brainbashbackend-brainbash.up.railway.app';
 
 /// Preset backend URLs for quick selection.
 const presetBaseUrls = [
-  'http://localhost:8080',
   'https://brainbashbackend-brainbash.up.railway.app',
+  'http://localhost:8080',
 ];
 
 class BaseUrlNotifier extends StateNotifier<String?> {
