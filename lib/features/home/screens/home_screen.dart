@@ -26,19 +26,23 @@ class HomeScreen extends ConsumerWidget {
             // App bar
             SliverAppBar(
               floating: true,
-              title: Row(
-                children: [
-                  const Icon(Icons.psychology_alt_rounded,
-                      color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    'BrainBash',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
-                        ),
-                  ),
-                ],
+              title: GestureDetector(
+                onTap: () => context.push('/settings'),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.psychology_alt_rounded,
+                        color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'BrainBash',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 IconButton(

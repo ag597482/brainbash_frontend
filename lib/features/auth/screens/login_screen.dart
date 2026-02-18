@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/auth_provider.dart';
@@ -51,13 +52,16 @@ class LoginScreen extends ConsumerWidget {
 
                 const SizedBox(height: 24),
 
-                // App name
-                Text(
-                  'BrainBash',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                      ),
+                // App name — tap to open API base URL settings
+                GestureDetector(
+                  onTap: () => context.push('/settings'),
+                  child: Text(
+                    'BrainBash',
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                        ),
+                  ),
                 ).animate(delay: 200.ms).fadeIn(duration: 500.ms),
 
                 const SizedBox(height: 8),

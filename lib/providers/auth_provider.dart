@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'base_url_provider.dart';
 import '../models/user_profile.dart';
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
@@ -14,9 +15,13 @@ const _keyAuthUser = 'auth_user';
 const _googleClientId =
     '299124149695-l9j2u20pfjekin89rg24olrob8kia2cr.apps.googleusercontent.com';
 
-// API client provider
+// API client provider — one instance; base URL updated when stored URL loads or changes.
 final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient();
+  final client = ApiClient(baseUrl: defaultBaseUrl);
+  ref.listen<String?>(baseUrlProvider, (prev, next) {
+    client.setBaseUrl(next ?? defaultBaseUrl);
+  });
+  return client;
 });
 
 // Auth service provider

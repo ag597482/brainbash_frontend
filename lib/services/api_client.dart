@@ -48,6 +48,11 @@ class ApiClient {
     _authToken = null;
   }
 
+  /// Updates the base URL for all subsequent requests.
+  void setBaseUrl(String baseUrl) {
+    _dio.options.baseUrl = baseUrl;
+  }
+
   Future<Response<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,

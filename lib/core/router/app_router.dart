@@ -5,6 +5,7 @@ import '../../models/quiz_category.dart';
 import '../../providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../features/settings/screens/settings_screen.dart';
 import '../../features/quiz/screens/quiz_intro_screen.dart';
 import '../../features/quiz/screens/quiz_screen.dart';
 import '../../features/results/screens/result_screen.dart';
@@ -21,9 +22,10 @@ GoRouter createAppRouter(Ref ref) {
 
       final isLoggedIn = authState.isAuthenticated;
       final isOnLogin = state.matchedLocation == '/login';
+      final isOnSettings = state.matchedLocation == '/settings';
 
-      // If not logged in and not on login page, redirect to login
-      if (!isLoggedIn && !isOnLogin) return '/login';
+      // If not logged in and not on login/settings, redirect to login
+      if (!isLoggedIn && !isOnLogin && !isOnSettings) return '/login';
 
       // If logged in and on login page, redirect to home
       if (isLoggedIn && isOnLogin) return '/';
@@ -40,6 +42,11 @@ GoRouter createAppRouter(Ref ref) {
         path: '/',
         name: 'home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        name: 'settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         path: '/quiz/:category/intro',
