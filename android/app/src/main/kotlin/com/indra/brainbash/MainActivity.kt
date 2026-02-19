@@ -1,4 +1,4 @@
-package com.example.brainbash_frontend
+package com.indra.brainbash
 
 import io.flutter.embedding.android.FlutterActivity
 

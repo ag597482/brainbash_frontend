@@ -1,5 +1,12 @@
+import 'package:flutter/foundation.dart';
+
 import 'api_client.dart';
 import '../models/user_profile.dart';
+
+/// Google OAuth Web client ID — backend must verify id_token with this client.
+/// Used only for debug message when backend returns 401.
+const String kGoogleWebClientIdForBackend =
+    '299124149695-l9j2u20pfjekin89rg24olrob8kia2cr.apps.googleusercontent.com';
 
 class AuthService {
   AuthService({required this.apiClient});
@@ -16,6 +23,15 @@ class AuthService {
     final data = <String, dynamic>{};
     if (idToken != null) data['id_token'] = idToken;
     if (accessToken != null) data['access_token'] = accessToken;
+
+    if (kDebugMode) {
+      final baseUrl = apiClient.dio.options.baseUrl;
+      debugPrint(
+        '[Auth] POST $baseUrl/auth/google with '
+        'id_token: ${idToken != null ? "${idToken.length} chars" : "null"}, '
+        'access_token: ${accessToken != null ? "${accessToken.length} chars" : "null"}',
+      );
+    }
 
     final response = await apiClient.post<Map<String, dynamic>>(
       '/auth/google',

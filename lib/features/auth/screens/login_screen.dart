@@ -52,15 +52,18 @@ class LoginScreen extends ConsumerWidget {
 
                 const SizedBox(height: 24),
 
-                // App name — tap to open API base URL settings
-                GestureDetector(
-                  onTap: () => context.push('/settings'),
-                  child: Text(
-                    'BrainBash',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
-                        ),
+                // App name — long press to open API base URL settings
+                Tooltip(
+                  message: 'Long press to change API base URL',
+                  child: GestureDetector(
+                    onLongPress: () => context.push('/settings'),
+                    child: Text(
+                      'BrainBash',
+                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
+                    ),
                   ),
                 ).animate(delay: 200.ms).fadeIn(duration: 500.ms),
 

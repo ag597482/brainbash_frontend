@@ -42,6 +42,7 @@ class CategoryCard extends StatelessWidget {
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
@@ -56,7 +57,7 @@ class CategoryCard extends StatelessWidget {
                 size: 28,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               category.label,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -65,7 +66,7 @@ class CategoryCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               hasScore
                   ? 'Last: ${stats!.lastScore!.round()}${category.metricUnit}'
@@ -80,6 +81,8 @@ class CategoryCard extends StatelessWidget {
                             ?.withValues(alpha: 0.5),
                     fontWeight: hasScore ? FontWeight.w600 : FontWeight.w400,
                   ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

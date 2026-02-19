@@ -1,25 +1,28 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'base_url_provider.dart';
 import '../models/user_profile.dart';
 import '../services/api_client.dart';
-import '../services/auth_service.dart';
+import '../services/auth_service.dart' show AuthService, kGoogleWebClientIdForBackend;
 
 const _keyAuthToken = 'auth_token';
 const _keyAuthUser = 'auth_user';
 
-const _googleClientId =
+// Web client ID (used for web and as serverClientId for Android)
+const _googleWebClientId =
     '299124149695-l9j2u20pfjekin89rg24olrob8kia2cr.apps.googleusercontent.com';
 
 // API client provider — one instance; base URL updated when stored URL loads or changes.
+// On Android emulator, localhost is resolved to 10.0.2.2 so the app can reach the host backend.
 final apiClientProvider = Provider<ApiClient>((ref) {
   final client = ApiClient(baseUrl: defaultBaseUrl);
   ref.listen<String?>(baseUrlProvider, (prev, next) {
-    client.setBaseUrl(next ?? defaultBaseUrl);
+    client.setBaseUrl(effectiveBaseUrl(next));
   });
   return client;
 });
@@ -32,8 +35,12 @@ final authServiceProvider = Provider<AuthService>((ref) {
 // Google Sign-In instance provider
 final googleSignInProvider = Provider<GoogleSignIn>((ref) {
   return GoogleSignIn(
-    clientId: kIsWeb ? _googleClientId : null,
-    serverClientId: kIsWeb ? null : _googleClientId,
+    // For web: use Web client ID
+    // For Android: clientId is null (uses SHA-1 + package name from Google Cloud Console)
+    clientId: kIsWeb ? _googleWebClientId : null,
+    // For Android: serverClientId should be Web client ID (for backend to verify id_token)
+    // For web: serverClientId is null
+    serverClientId: kIsWeb ? null : _googleWebClientId,
     scopes: ['email', 'profile'],
   );
 });
@@ -124,11 +131,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        state = state.copyWith(isLoading: false);
+        // User closed the account picker, or sign-in failed (e.g. wrong SHA-1 on Android)
+        state = state.copyWith(
+          isLoading: false,
+          error: kIsWeb
+              ? 'Sign-in cancelled.'
+              : 'Sign-in cancelled or failed. On Android, add your app\'s SHA-1 and package name (com.indra.brainbash) to the Android OAuth client in Google Cloud Console.',
+        );
         return;
       }
 
       final googleAuth = await googleUser.authentication;
+
+      if (!kIsWeb && googleAuth.idToken == null && googleAuth.accessToken == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Could not get credentials from Google. Ensure the Android OAuth client has the correct SHA-1 in Google Cloud Console.',
+        );
+        return;
+      }
 
       // Send whichever token is available.
       // On mobile, idToken is available. On web, only accessToken is.
@@ -142,8 +163,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await prefs.setString(_keyAuthUser, jsonEncode(result.user.toJson()));
 
       state = AuthState(user: result.user, token: result.token);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+    } catch (e, st) {
+      debugPrint('Google sign-in error: $e');
+      if (e is DioException && e.response != null) {
+        final body = e.response!.data;
+        final backendError = body is Map && body['error'] != null
+            ? body['error'].toString()
+            : e.response!.statusCode.toString();
+        debugPrint('[Auth] Backend response (${e.response!.statusCode}): $backendError');
+      }
+      debugPrint(st.toString());
+      String message = e.toString();
+      if (e is DioException && e.response?.statusCode == 401) {
+        final body = e.response?.data;
+        final backendError = body is Map && body['error'] != null
+            ? body['error'].toString()
+            : null;
+        message = backendError != null
+            ? 'Backend rejected sign-in: $backendError'
+            : 'Backend rejected sign-in (401). Set GOOGLE_CLIENT_ID on Railway to: ${kGoogleWebClientIdForBackend}';
+      }
+      state = state.copyWith(isLoading: false, error: message);
     }
   }
 

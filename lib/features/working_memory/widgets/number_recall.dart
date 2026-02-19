@@ -115,9 +115,13 @@ class _NumberRecallWidgetState extends State<NumberRecallWidget> {
         final boxHeight = boxWidth * 1.15;
         final fontSize = boxWidth * 0.5;
 
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
             Text(
               'Remember these numbers',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -166,7 +170,9 @@ class _NumberRecallWidgetState extends State<NumberRecallWidget> {
                 ).animate(delay: Duration(milliseconds: i * 200)).fadeIn();
               }),
             ),
-          ],
+              ],
+            ),
+          ),
         );
       },
     );
@@ -183,6 +189,7 @@ class _NumberRecallWidgetState extends State<NumberRecallWidget> {
         return SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'Enter the numbers in order',
