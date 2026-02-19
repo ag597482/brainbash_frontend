@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -174,7 +175,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       debugPrint(st.toString());
       String message = e.toString();
-      if (e is DioException) {
+
+      // ApiException: 10 = DEVELOPER_ERROR = SHA-1 or package name mismatch in Google Cloud Console
+      if (e is PlatformException &&
+          (e.code == 'sign_in_failed' || e.message?.contains('ApiException: 10') == true)) {
+        message =
+            'Google Sign-In failed (Developer Error). Add this app\'s SHA-1 to the Android OAuth client in Google Cloud Console. '
+            'Debug/emulator: use debug keystore SHA-1. Play Store: use the SHA-1 from Play Console → App integrity → App signing key. '
+            'Package name must be: com.indra.brainbash';
+      } else if (e is DioException) {
         final statusCode = e.response?.statusCode;
         if (statusCode == 401) {
           final body = e.response?.data;
