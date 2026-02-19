@@ -24,7 +24,7 @@ class MetricTile extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: tileColor.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(14),
@@ -41,19 +41,19 @@ class MetricTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (icon != null)
-                    Icon(icon, size: 20, color: tileColor),
-                  if (icon != null) const SizedBox(height: 6),
+                    Icon(icon, size: 18, color: tileColor),
+                  if (icon != null) const SizedBox(height: 4),
                   Text(
                     label,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textSecondary,
+                          fontSize: 12,
                         ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
-              SizedBox(
-                height: constraints.maxHeight * 0.4,
+              const SizedBox(height: 2),
+              Flexible(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
