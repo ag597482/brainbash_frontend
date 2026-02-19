@@ -174,14 +174,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       debugPrint(st.toString());
       String message = e.toString();
-      if (e is DioException && e.response?.statusCode == 401) {
-        final body = e.response?.data;
-        final backendError = body is Map && body['error'] != null
-            ? body['error'].toString()
-            : null;
-        message = backendError != null
-            ? 'Backend rejected sign-in: $backendError'
-            : 'Backend rejected sign-in (401). Set GOOGLE_CLIENT_ID on Railway to: ${kGoogleWebClientIdForBackend}';
+      if (e is DioException) {
+        final statusCode = e.response?.statusCode;
+        if (statusCode == 401) {
+          final body = e.response?.data;
+          final backendError = body is Map && body['error'] != null
+              ? body['error'].toString()
+              : null;
+          message = backendError != null
+              ? 'Backend rejected sign-in: $backendError'
+              : 'Backend rejected sign-in (401). Set GOOGLE_CLIENT_ID on Railway to: ${kGoogleWebClientIdForBackend}';
+        } else if (statusCode == 404) {
+          message =
+              'Backend endpoint not found (404). Ensure the backend route POST /auth/google is configured and accessible.';
+        }
       }
       state = state.copyWith(isLoading: false, error: message);
     }

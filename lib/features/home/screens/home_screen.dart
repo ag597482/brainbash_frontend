@@ -33,8 +33,12 @@ class HomeScreen extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.psychology_alt_rounded,
-                          color: AppColors.primary),
+                      Image.asset(
+                        'assets/images/brainbash_logo.png',
+                        width: 32,
+                        height: 32,
+                        fit: BoxFit.contain,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'BrainBash',

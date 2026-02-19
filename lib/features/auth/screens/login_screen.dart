@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../widgets/google_logo.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
@@ -32,18 +33,12 @@ class LoginScreen extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // App icon
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Icon(
-                    Icons.psychology_alt_rounded,
-                    size: 64,
-                    color: AppColors.primary,
-                  ),
+                // App logo
+                Image.asset(
+                  'assets/images/brainbash_logo.png',
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.contain,
                 )
                     .animate()
                     .fadeIn(duration: 600.ms)
@@ -99,11 +94,7 @@ class LoginScreen extends ConsumerWidget {
                             child:
                                 CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(
-                            Icons.g_mobiledata_rounded,
-                            size: 28,
-                            color: AppColors.textPrimary,
-                          ),
+                        : const GoogleLogo(size: 24),
                     label: Text(
                       authState.isLoading
                           ? 'Signing in...'

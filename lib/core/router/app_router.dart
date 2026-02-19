@@ -10,15 +10,21 @@ import '../../features/quiz/screens/quiz_intro_screen.dart';
 import '../../features/quiz/screens/quiz_screen.dart';
 import '../../features/results/screens/result_screen.dart';
 import '../../features/results/screens/dashboard_screen.dart';
+import '../../widgets/splash_screen.dart';
 
 GoRouter createAppRouter(Ref ref) {
   final authState = ref.watch(authProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     redirect: (context, state) {
-      // Wait for initial auth load (e.g. reading token/user from device)
-      if (authState.isLoading) return null;
+      // Show splash screen while loading
+      if (authState.isLoading) return '/splash';
+      
+      // After loading, redirect from splash to appropriate screen
+      if (state.matchedLocation == '/splash') {
+        return authState.isAuthenticated ? '/' : '/login';
+      }
 
       final isLoggedIn = authState.isAuthenticated;
       final isOnLogin = state.matchedLocation == '/login';
@@ -33,6 +39,11 @@ GoRouter createAppRouter(Ref ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        name: 'splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/login',
         name: 'login',

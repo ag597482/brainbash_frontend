@@ -1,11 +1,11 @@
 {
-    "name": "brainbash_frontend",
-    "short_name": "brainbash_frontend",
+    "name": "BrainBash",
+    "short_name": "BrainBash",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Train your brain, track your progress",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
