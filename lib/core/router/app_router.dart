@@ -10,6 +10,7 @@ import '../../features/quiz/screens/quiz_intro_screen.dart';
 import '../../features/quiz/screens/quiz_screen.dart';
 import '../../features/results/screens/result_screen.dart';
 import '../../features/results/screens/dashboard_screen.dart';
+import '../../features/leaderboard/screens/leaderboard_screen.dart';
 import '../../widgets/splash_screen.dart';
 
 GoRouter createAppRouter(Ref ref) {
@@ -90,6 +91,11 @@ GoRouter createAppRouter(Ref ref) {
         path: '/dashboard',
         name: 'dashboard',
         builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: '/leaderboard',
+        name: 'leaderboard',
+        builder: (context, state) => const LeaderboardScreen(),
       ),
     ],
   );
