@@ -12,9 +12,10 @@ final statsServiceProvider = Provider<StatsService>((ref) {
 });
 
 /// Fetches user stats from GET /api/user/stats (overall_score + category avg/max). Use ref.refresh to reload.
+/// Not called for guest users (no auth APIs).
 final apiUserStatsProvider = FutureProvider<UserStatsApiResponse?>((ref) async {
   final auth = ref.watch(authProvider);
-  if (!auth.isAuthenticated) return null;
+  if (!auth.isAuthenticated || auth.isGuest) return null;
 
   final statsService = ref.watch(statsServiceProvider);
   try {
@@ -24,10 +25,10 @@ final apiUserStatsProvider = FutureProvider<UserStatsApiResponse?>((ref) async {
   }
 });
 
-/// Cached user profile (no /stats call). Use auth user when available.
+/// Cached user profile (no /stats call). Use auth user when available. For guest, returns placeholder.
 final userStatsProvider = FutureProvider<UserProfile?>((ref) async {
   final auth = ref.watch(authProvider);
-  if (!auth.isAuthenticated) return null;
+  if (!auth.canAccessApp) return null;
   return auth.user;
 });
 

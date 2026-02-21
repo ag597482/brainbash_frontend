@@ -13,6 +13,19 @@ import '../services/auth_service.dart' show AuthService, kGoogleWebClientIdForBa
 
 const _keyAuthToken = 'auth_token';
 const _keyAuthUser = 'auth_user';
+const _keyIsGuest = 'is_guest';
+
+/// Placeholder user for guest mode. No auth APIs are called for this user.
+UserProfile get _guestUser => const UserProfile(
+      id: 'guest',
+      name: 'Guest',
+      email: null,
+      avatarUrl: null,
+      overallScore: null,
+      streak: 0,
+      categoryStats: {},
+      allResponseTimes: [],
+    );
 
 // Web client ID (used for web and as serverClientId for Android)
 const _googleWebClientId =
@@ -53,26 +66,34 @@ class AuthState {
     this.token,
     this.isLoading = false,
     this.error,
+    this.isGuest = false,
   });
 
   final UserProfile? user;
   final String? token;
   final bool isLoading;
   final String? error;
+  final bool isGuest;
 
+  /// True when user has a real token and profile (not guest).
   bool get isAuthenticated => token != null && user != null;
+
+  /// True when user can use the app (logged in or guest). Used for routing.
+  bool get canAccessApp => isAuthenticated || isGuest;
 
   AuthState copyWith({
     UserProfile? user,
     String? token,
     bool? isLoading,
     String? error,
+    bool? isGuest,
   }) {
     return AuthState(
       user: user ?? this.user,
       token: token ?? this.token,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      isGuest: isGuest ?? this.isGuest,
     );
   }
 }
@@ -92,7 +113,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final token = prefs.getString(_keyAuthToken);
 
     if (token == null) {
-      state = const AuthState(isLoading: false);
+      final isGuest = prefs.getBool(_keyIsGuest) ?? false;
+      if (isGuest) {
+        state = AuthState(user: _guestUser, token: null, isLoading: false, isGuest: true);
+      } else {
+        state = const AuthState(isLoading: false);
+      }
       return;
     }
 
@@ -163,7 +189,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await prefs.setString(_keyAuthToken, result.token);
       await prefs.setString(_keyAuthUser, jsonEncode(result.user.toJson()));
 
-      state = AuthState(user: result.user, token: result.token);
+      await prefs.remove(_keyIsGuest);
+      state = AuthState(user: result.user, token: result.token, isGuest: false);
     } catch (e, st) {
       debugPrint('Google sign-in error: $e');
       if (e is DioException && e.response != null) {
@@ -202,12 +229,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Enter app without signing in. No auth APIs are called for guest users.
+  Future<void> continueAsGuest() async {
+    state = AuthState(user: _guestUser, token: null, isLoading: false, isGuest: true);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyIsGuest, true);
+  }
+
   Future<void> logout() async {
     _authService.logout();
     await _googleSignIn.signOut();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyAuthToken);
     await prefs.remove(_keyAuthUser);
+    await prefs.remove(_keyIsGuest);
     state = const AuthState();
   }
 }

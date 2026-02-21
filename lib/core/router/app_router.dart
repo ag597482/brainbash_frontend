@@ -11,6 +11,7 @@ import '../../features/quiz/screens/quiz_screen.dart';
 import '../../features/results/screens/result_screen.dart';
 import '../../features/results/screens/dashboard_screen.dart';
 import '../../features/leaderboard/screens/leaderboard_screen.dart';
+import '../../features/legal/screens/privacy_policy_screen.dart';
 import '../../widgets/splash_screen.dart';
 
 GoRouter createAppRouter(Ref ref) {
@@ -24,18 +25,19 @@ GoRouter createAppRouter(Ref ref) {
       
       // After loading, redirect from splash to appropriate screen
       if (state.matchedLocation == '/splash') {
-        return authState.isAuthenticated ? '/' : '/login';
+        return authState.canAccessApp ? '/' : '/login';
       }
 
-      final isLoggedIn = authState.isAuthenticated;
+      final canAccessApp = authState.canAccessApp;
       final isOnLogin = state.matchedLocation == '/login';
       final isOnSettings = state.matchedLocation == '/settings';
+      final isOnPrivacyPolicy = state.matchedLocation == '/privacy-policy';
 
-      // If not logged in and not on login/settings, redirect to login
-      if (!isLoggedIn && !isOnLogin && !isOnSettings) return '/login';
+      // If not logged in and not guest, and not on login/settings/privacy-policy, redirect to login
+      if (!canAccessApp && !isOnLogin && !isOnSettings && !isOnPrivacyPolicy) return '/login';
 
-      // If logged in and on login page, redirect to home
-      if (isLoggedIn && isOnLogin) return '/';
+      // If logged in or guest and on login page, redirect to home
+      if (canAccessApp && isOnLogin) return '/';
 
       return null;
     },
@@ -59,6 +61,11 @@ GoRouter createAppRouter(Ref ref) {
         path: '/settings',
         name: 'settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/privacy-policy',
+        name: 'privacyPolicy',
+        builder: (context, state) => const PrivacyPolicyScreen(),
       ),
       GoRoute(
         path: '/quiz/:category/intro',

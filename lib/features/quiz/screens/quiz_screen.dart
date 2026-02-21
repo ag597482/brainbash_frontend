@@ -6,6 +6,7 @@ import '../../../models/quiz_category.dart';
 import '../../../models/quiz_session.dart';
 import '../../../providers/quiz_provider.dart';
 import '../../../providers/stats_provider.dart';
+import '../../../providers/auth_provider.dart';
 import '../../../providers/timer_provider.dart';
 import '../widgets/countdown_timer.dart';
 import '../widgets/progress_bar.dart';
@@ -84,9 +85,24 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     final notifier = ref.read(quizSessionProvider.notifier);
     final result = notifier.buildResult();
     if (result != null) {
-      final merged = await notifier.submitResult();
-      ref.read(latestResultProvider.notifier).state = merged ?? result;
-      ref.invalidate(apiUserStatsProvider);
+      final isGuest = ref.read(authProvider).isGuest;
+      if (isGuest) {
+        final quizService = ref.read(quizServiceProvider);
+        final apiResponse = await quizService.submitGuestGameResult(result);
+        final toShow = apiResponse != null
+            ? result.copyWith(
+                normalizedScore: apiResponse.score,
+                totalQuestions: apiResponse.questions,
+                correctAnswers: apiResponse.correct,
+                avgResponseTimeMs: apiResponse.avgTime * 1000,
+              )
+            : result;
+        ref.read(latestResultProvider.notifier).state = toShow;
+      } else {
+        final merged = await notifier.submitResult();
+        ref.read(latestResultProvider.notifier).state = merged ?? result;
+        ref.invalidate(apiUserStatsProvider);
+      }
     }
     ref.read(countdownTimerProvider.notifier).reset();
     ref.read(elapsedTimerProvider.notifier).stop();
@@ -130,9 +146,9 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Progress
+              // Progress (cap at total so we never show e.g. 16/15 after last answer)
               QuizProgressBar(
-                current: session.currentIndex + 1,
+                current: (session.currentIndex + 1).clamp(1, session.totalQuestions),
                 total: session.totalQuestions,
                 color: widget.category.color,
               ),

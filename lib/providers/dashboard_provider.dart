@@ -10,8 +10,10 @@ final dashboardServiceProvider = Provider<DashboardService>((ref) {
 
 /// Fetches leaderboard data from GET /api/dashboard.
 /// Invalidate to refresh (e.g. after returning from a quiz).
+/// For guest users returns empty data (no auth API call).
 final dashboardLeaderboardProvider =
-    FutureProvider<DashboardLeaderboardResponse>((ref) {
-  ref.watch(authProvider); // refetch when auth changes
+    FutureProvider<DashboardLeaderboardResponse>((ref) async {
+  final auth = ref.watch(authProvider);
+  if (auth.isGuest) return const DashboardLeaderboardResponse();
   return ref.read(dashboardServiceProvider).getDashboard();
 });

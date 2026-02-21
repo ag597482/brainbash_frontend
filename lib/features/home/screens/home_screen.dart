@@ -9,6 +9,54 @@ import '../widgets/stats_summary.dart';
 import '../widgets/category_card.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../widgets/google_logo.dart';
+
+/// When guest taps Dashboard or Leaderboard, show sign-in dialog. Otherwise navigate.
+void _onScoresTap(BuildContext context, WidgetRef ref, {required bool toLeaderboard}) {
+  final isGuest = ref.read(authProvider).isGuest;
+  if (!isGuest) {
+    if (toLeaderboard) {
+      context.push('/leaderboard');
+    } else {
+      context.push('/dashboard');
+    }
+    return;
+  }
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Sign in to view scores'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Create an account or sign in with Google to see your Brain Dashboard, leaderboard, and save your progress.',
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ref.read(authProvider.notifier).loginWithGoogle();
+            },
+            icon: const GoogleLogo(size: 20),
+            label: const Text('Continue with Google'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -54,12 +102,12 @@ class HomeScreen extends ConsumerWidget {
               actions: [
                 IconButton(
                   icon: const Icon(Icons.emoji_events_rounded),
-                  onPressed: () => context.push('/leaderboard'),
+                  onPressed: () => _onScoresTap(context, ref, toLeaderboard: true),
                   tooltip: 'Leaderboard',
                 ),
                 IconButton(
                   icon: const Icon(Icons.bar_chart_rounded),
-                  onPressed: () => context.push('/dashboard'),
+                  onPressed: () => _onScoresTap(context, ref, toLeaderboard: false),
                   tooltip: 'Dashboard',
                 ),
                 IconButton(
@@ -132,7 +180,7 @@ class HomeScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: GestureDetector(
-                  onTap: () => context.push('/dashboard'),
+                  onTap: () => _onScoresTap(context, ref, toLeaderboard: false),
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(

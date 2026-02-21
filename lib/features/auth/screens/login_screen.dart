@@ -119,15 +119,60 @@ class LoginScreen extends ConsumerWidget {
                     .fadeIn(duration: 500.ms)
                     .slideY(begin: 0.2, duration: 500.ms),
 
+                const SizedBox(height: 16),
+
+                // Continue as Guest
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: TextButton(
+                    onPressed: authState.isLoading
+                        ? null
+                        : () {
+                            ref
+                                .read(authProvider.notifier)
+                                .continueAsGuest();
+                          },
+                    child: Text(
+                      'Continue as Guest',
+                      style:
+                          Theme.of(context).textTheme.labelLarge?.copyWith(
+                                fontSize: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                    ),
+                  ),
+                )
+                    .animate(delay: 650.ms)
+                    .fadeIn(duration: 500.ms)
+                    .slideY(begin: 0.2, duration: 500.ms),
+
                 const SizedBox(height: 32),
 
-                // Footer text
-                Text(
-                  'By continuing, you agree to our Terms of Service\nand Privacy Policy',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textHint,
+                // Footer text with Privacy Policy link
+                Center(
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    children: [
+                      Text(
+                        'By continuing, you agree to our Terms of Service and ',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textHint,
+                            ),
                       ),
-                  textAlign: TextAlign.center,
+                      GestureDetector(
+                        onTap: () => context.go('/privacy-policy'),
+                        child: Text(
+                          'Privacy Policy',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.textHint,
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ).animate(delay: 800.ms).fadeIn(duration: 500.ms),
               ],
             ),
